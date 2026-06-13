@@ -1,0 +1,46 @@
+name: Pipeline DevSecOps - Task Manager
+
+on:
+  push:
+    branches: [ "main", "desenvolvimento", "staging" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  Build-and-Test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Baixar codigo do repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar o Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Validar instalacao de dependencias
+      run: |
+        pip install -r requirements.txt
+        python -m compileall todo_project/
+
+  SAST-Security:
+    needs: Build-and-Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Baixar codigo do repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar o Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Rodar Analise Estatica (Bandit)
+      run: |
+        pip install bandit
+        bandit -r todo_project/
+
+    - name: Rodar Analise de Dependencias (Safety)
+      run: |
+        pip install safety
+        safety check || echo "Vulnerabilidades encontradas nas dependencias, mas o pipeline continua para fins educacionais."
